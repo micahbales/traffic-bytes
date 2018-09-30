@@ -125,6 +125,18 @@ class App extends Component {
   }
 
   render() {
+    const pivotTableProps = {
+      data: this.state.current.trafficData,
+      title: this.state.current.tableTitle,
+      history: this.state.history,
+      filterButtonText: this.state.current.filterButtonText,
+      handleIpClick: this.handleIpClick,
+      handleSwitchFilter: this.handleSwitchFilter,
+      handleHistoryBack: this.handleHistoryBack,
+      handleReset: this.handleReset,
+      handleHistoryForward: this.handleHistoryForward
+    };
+
     return (
       <div className="App container-fluid">
         <div className="header-logo">
@@ -135,57 +147,10 @@ class App extends Component {
           </div>
         </div>
         <PivotTable
-          data={this.state.current.trafficData}
-          title={this.state.current.tableTitle}
-          history={this.state.history}
-          filterButtonText={this.state.current.filterButtonText}
-          handleIpClick={this.handleIpClick}
-          handleSwitchFilter={this.handleSwitchFilter}
-          handleHistoryBack={this.handleHistoryBack}
-          handleReset={this.handleReset}
-          handleHistoryForward={this.handleHistoryForward}
+          {...pivotTableProps}
         />
       </div>
     );
-  }
-
-  handleIpClick(e) {
-    const ipAddress = e.currentTarget.textContent;
-    const targetClasses = e.currentTarget.className;
-    
-    const currentState = cloneDeep(this.state.current);
-    currentState.activeIp = ipAddress;
-    currentState.filter = targetClasses.indexOf('data-to') !== -1 ? filterType.TO : filterType.FROM;
-    currentState.filterButtonText = this.getFilterButtonText();
-
-    const newHistory = this.state.current;
-
-    this.setState({
-      current: currentState,
-      history: {
-        back: this.state.history.back.concat(newHistory),
-        forward: []
-      }
-    }, () => {
-      // Filter displayed data once state is updated
-      this.filterIpData();
-    });
-  }
-
-  handleSwitchFilter() {
-    const newHistory = this.state.current;
-    const currentState = cloneDeep(this.state.current);
-    currentState.filter = this.state.current.filter !== filterType.FROM ? filterType.TO : filterType.FROM;
-
-    this.setState({
-      current: currentState,
-      history: {
-        back: this.state.history.back.concat(newHistory),
-        forward: []
-      }
-    }, () => {
-      this.filterIpData();
-    });
   }
 
   filterIpData() {
@@ -208,6 +173,39 @@ class App extends Component {
         filterButtonText: this.getFilterButtonText()
       }
     });
+  }
+
+  setStateAndFilterData(currentState) {
+    const newHistory = this.state.current;
+    this.setState({
+      current: currentState,
+      history: {
+        back: this.state.history.back.concat(newHistory),
+        forward: []
+      }
+    }, () => {
+      // Once state is updated, filter data to be displayed
+      this.filterIpData();
+    });
+  }
+
+  handleIpClick(e) {
+    const ipAddress = e.currentTarget.textContent;
+    const targetClasses = e.currentTarget.className;
+    
+    const currentState = cloneDeep(this.state.current);
+    currentState.activeIp = ipAddress;
+    currentState.filter = targetClasses.indexOf('data-to') !== -1 ? filterType.TO : filterType.FROM;
+    currentState.filterButtonText = this.getFilterButtonText();
+
+    this.setStateAndFilterData(currentState);
+  }
+
+  handleSwitchFilter() {
+    const currentState = cloneDeep(this.state.current);
+    currentState.filter = this.state.current.filter !== filterType.FROM ? filterType.TO : filterType.FROM;
+
+    this.setStateAndFilterData(currentState);
   }
 
   getFilterButtonText() {
