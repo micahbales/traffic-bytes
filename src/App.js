@@ -21,7 +21,8 @@ const TrafficDataColumns = (props) => {
   return (
       data.map((rowData, i) => {
         return (
-          <div className="row" key={i}>
+          <div>
+            <div className="row" key={i}>
             <div className={`col-md-4 data-to ${rowData.result.header === 'true' ? '' : 'link-like clickable'}`} 
                     onClick={props.handleIpClick}>
                 {rowData.result['All_Traffic.dest']}
@@ -33,6 +34,12 @@ const TrafficDataColumns = (props) => {
             <div className="col-md-4">
                 {rowData.result['sum_bytes']}
             </div>
+            </div>
+            <div className={`row no-data-row ${props.data.length < 1 ? 'text-center' : 'd-none'}`}>
+              <div className="col-md-4 offset-md-4">
+                <h5 className="text-center">No data for this filter</h5>
+              </div>
+            </div>
           </div>
         );
       })
@@ -43,6 +50,10 @@ const PivotTable = (props) => {
   return (
     <div className="row">
       <div className="col-md-8 offset-md-2 text-center">
+        <button className={`btn ${props.filterButtonText === '' ? 'd-none' : 'btn-primary filter-button'}`} 
+                onClick={props.handleSwitchFilter}>
+            {props.filterButtonText}
+        </button>
         <h3>{props.title}</h3>
       </div>
       <div className="col-md-8 offset-md-2">
@@ -61,12 +72,15 @@ class App extends Component {
     this.state = {
       activeIp: null,
       filter: null,
+      filterButtonText: '',
       tableTitle: 'All Data Traffic',
       trafficData: trafficData
     }
     // Manually bind React component methods to the class
     this.handleIpClick = this.handleIpClick.bind(this);
     this.filterIpData = this.filterIpData.bind(this);
+    this.handleSwitchFilter = this.handleSwitchFilter.bind(this);
+    this.getFilterButtonText = this.getFilterButtonText.bind(this);
   }
 
   render() {
@@ -82,7 +96,9 @@ class App extends Component {
         <PivotTable
           data={this.state.trafficData}
           title={this.state.tableTitle}
+          filterButtonText={this.state.filterButtonText}
           handleIpClick={this.handleIpClick}
+          handleSwitchFilter={this.handleSwitchFilter}
         />
       </div>
     );
@@ -91,14 +107,25 @@ class App extends Component {
   handleIpClick(e) {
     const ipAddress = e.currentTarget.textContent;
     const targetClasses = e.currentTarget.className;
-    
+
     this.setState({
       activeIp: ipAddress, 
-      filter: targetClasses.indexOf('data-to') !== -1 ? filterType.TO : filterType.FROM
+      filter: targetClasses.indexOf('data-to') !== -1 ? filterType.TO : filterType.FROM,
+      filterButtonText: this.getFilterButtonText()
     }, () => {
       // Filter displayed data once state is updated
       this.filterIpData();
     });
+  }
+
+  handleSwitchFilter() {
+    console.log('handleSwitchFilter');
+    this.setState({
+      filter: this.state.filter === filterType.FROM ? filterType.TO : filterType.FROM,
+      filterButtonText: this.getFilterButtonText()
+    }, () => {
+      this.filterIpData();
+    })
   }
 
   filterIpData() {
@@ -114,8 +141,13 @@ class App extends Component {
 
     this.setState({
       trafficData: updatedData,
-      tableTitle: `Traffic ${this.state.filter !== filterType.FROM ? 'To' : 'From'} ${activeIp}`
+      tableTitle: `Traffic ${this.state.filter !== filterType.FROM ? 'To' : 'From'} ${activeIp}`,
+      filterButtonText: this.getFilterButtonText()
     });
+  }
+
+  getFilterButtonText() {
+    return this.state.filter === filterType.FROM ? 'View Traffic FROM' : 'View Traffic TO';
   }
 }
 

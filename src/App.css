@@ -2,6 +2,14 @@
   cursor: pointer;
 }
 
+.filter-button {
+  margin: 15px 0px;
+}
+
 .link-like:hover {
   text-decoration: underline;
+}
+
+.no-data-row {
+  margin-top: 15px;
 }
