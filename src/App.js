@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import trafficData from './data/traffic_bytes';
 import './App.css';
 import {cloneDeep, filter} from 'lodash';
+import bannerLogo from './img/ie-logo-banner.png';
 
 const filterType = {
   DEFAULT: 0,
@@ -25,69 +26,87 @@ const defaultState = {
 };
 
 const TrafficDataColumns = (props) => {
-  const data = cloneDeep(props.data);
-  // Add headers to traffic data
-  data.unshift({result: {
-    'header': 'true',
-    'All_Traffic.dest': 'Traffic Data To',
-    'All_Traffic.src': 'Traffic Data From',
-    'sum_bytes': 'Total Bytes Transferred'
-  }});
   return (
-      data.map((rowData, i) => {
-        return (
-          <div key={i}>
-            <div className="row">
-            <div className={`col-md-4 data-to ${rowData.result.header === 'true' ? '' : 'link-like clickable'}`} 
-                    onClick={props.handleIpClick}>
-                {rowData.result['All_Traffic.dest']}
-            </div>
-            <div className={`col-md-4 data-from ${rowData.result.header === 'true' ? '' : 'link-like clickable'}`} 
-                    onClick={props.handleIpClick}>
-                {rowData.result['All_Traffic.src']}
-            </div>
-            <div className="col-md-4">
-                {rowData.result['sum_bytes']}
-            </div>
-            </div>
-            <div className={`row no-data-row ${props.data.length < 1 ? 'text-center' : 'd-none'}`}>
-              <div className="col-md-4 offset-md-4">
-                <h5 className="text-center">No data for this filter</h5>
+      <div>
+        <div className="row text-center header">
+          <div className={`col-4 ${props.filter === filterType.FROM ? 'highlighted-header' : ''}`}><h5>Data From</h5></div>
+          <div className={`col-4 ${props.filter === filterType.TO ? 'highlighted-header' : ''}`}><h5>Data To</h5></div>
+          <div className="col-4 "><h5>Total Bytes</h5></div>
+        </div>
+        {
+          props.data.map((rowData, i) => {
+            return (
+              <div key={i}>
+                <div className="row text-center">
+                  <div className={`col-4 data-from ${rowData.result.header === 'true' ? '' : 'link-like clickable'}`} 
+                          onClick={props.handleIpClick}>
+                      {rowData.result['All_Traffic.src']}
+                  </div>
+                  <div className={`col-4 data-to ${rowData.result.header === 'true' ? '' : 'link-like clickable'}`} 
+                          onClick={props.handleIpClick}>
+                      {rowData.result['All_Traffic.dest']}
+                  </div>
+                  <div className="col-4">
+                      {rowData.result['sum_bytes']}
+                  </div>
+                </div>
               </div>
-            </div>
+            );
+          })
+        }
+        <div className={`row no-data-row ${!props.data.length ? 'text-center' : 'd-none'}`}>
+          <div className="col">
+            <h5 className="text-center">No data for this filter</h5>
           </div>
-        );
-      })
+        </div>
+      </div>
+      
   )
 };
 
 const PivotTable = (props) => {
   return (
     <div className="row">
-      <div className="col-md-8 offset-md-2 text-center">
-        <button className={`btn ${!props.history.back.length ? 'd-none' : 'btn-warning filter-button'}`}
-                onClick={props.handleHistoryBack}>
-          Back
-        </button>
-        <button className={`btn ${!props.history.back.length && !props.history.forward.length ? 
-                'd-none' : 'btn-danger filter-button'}`}
-                onClick={props.handleReset}>
-          Reset
-        </button>
-        <button className={`btn ${!props.history.forward.length ? 'd-none' : 'btn-success filter-button'}`}
-                onClick={props.handleHistoryForward}>
-          Forward
-        </button>
-        <button className={`btn ${!props.filterButtonText ? 'd-none' : 'btn-primary filter-button'}`} 
-                onClick={props.handleSwitchFilter}>
-            {props.filterButtonText}
-        </button>
-        <h3>{props.title}</h3>
+      <div className="col-8 offset-2 text-center">
+        <div className="row">
+          <div className="col-12 col-sm-3 offset-sm-1 col-md-2 offset-md-3">
+            <button className={`btn ${!props.history.back.length ? 'invisible' : 'control-button back-button'}`}
+                    onClick={props.handleHistoryBack}>
+              Back
+            </button>
+          </div>
+
+          <div className="col-12 col-sm-3 col-md-2">
+            <button className={`btn ${!props.history.back.length && !props.history.forward.length ? 
+                    'invisible' : 'control-button reset-button'}`}
+                    onClick={props.handleReset}>
+              All Data
+            </button>
+          </div>
+
+          <div className="col-12 col-sm-3 col-md-2">
+            <button className={`btn ${!props.history.forward.length ? 'invisible' : 'control-button forward-button'}`}
+                    onClick={props.handleHistoryForward}>
+              Forward
+            </button>
+          </div>
+        </div>
+
+        <div className="col-12">
+          <h3 className={`${props.filter ? 'ip-selected' : ''}`}>{props.title}</h3>
+          
+          <button className={`btn ${!props.filterButtonText ? 'invisible' : 'control-button filter-button'}`} 
+                  onClick={props.handleSwitchFilter}>
+              {props.filterButtonText}
+          </button>
+        </div>
       </div>
-      <div className="col-md-8 offset-md-2">
+
+      <div className="col-8 offset-2">
         <TrafficDataColumns 
           data={props.data}
           handleIpClick={props.handleIpClick}
+          filter={props.filter}
         />
       </div>
   </div>
@@ -129,6 +148,7 @@ class App extends Component {
       data: this.state.current.trafficData,
       title: this.state.current.tableTitle,
       history: this.state.history,
+      filter: this.state.current.filter,
       filterButtonText: this.state.current.filterButtonText,
       handleIpClick: this.handleIpClick,
       handleSwitchFilter: this.handleSwitchFilter,
@@ -139,10 +159,14 @@ class App extends Component {
 
     return (
       <div className="App container-fluid">
-        <div className="header-logo">
-        </div>
         <div className="row">
-          <div className="col-md-12 text-center">
+          <div className="col-8 offset-2">
+            <img className="header-logo mx-auto d-block img-fluid" alt="Insight Engines Logo" src={bannerLogo}></img>
+          </div>
+        </div>
+        
+        <div className="row">
+          <div className="col-12 text-center">
             <h1>Traffic Bytes Pivot Table</h1>
           </div>
         </div>
@@ -169,7 +193,7 @@ class App extends Component {
         activeIp: this.state.current.activeIp,
         trafficData: updatedData,
         tableTitle: `Traffic ${this.state.current.filter !== filterType.FROM ? 'To' : 'From'} ${activeIp}`,
-        filter: this.state.current.filter === filterType.FROM ? filterType.TO : filterType.FROM,
+        filter: this.state.current.filter !== filterType.FROM ? filterType.TO : filterType.FROM,
         filterButtonText: this.getFilterButtonText()
       }
     });
@@ -203,7 +227,7 @@ class App extends Component {
 
   handleSwitchFilter() {
     const currentState = cloneDeep(this.state.current);
-    currentState.filter = this.state.current.filter !== filterType.FROM ? filterType.TO : filterType.FROM;
+    currentState.filter = this.state.current.filter === filterType.FROM ? filterType.TO : filterType.FROM;
 
     this.setStateAndFilterData(currentState);
   }

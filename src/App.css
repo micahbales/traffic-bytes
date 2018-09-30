@@ -1,9 +1,38 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+body {
+  background-color: #214765;
+  color: #f0f0f0;
+  font-family: 'Lato', Helvetica, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #f0f0f0;
+}
+
 .clickable {
   cursor: pointer;
 }
 
-.filter-button {
-  margin: 15px 0px;
+.control-button {
+  margin: 15px 10px;
+  min-width: 75px;
+}
+
+.reset-button {
+  background-color: #25AAE1;
+}
+
+.filter-button, .forward-button, .back-button {
+  background-color: #f0f0f0;
+}
+
+.header-logo {
+  margin: 25px 0px;
+}
+
+.highlighted-header h5, .ip-selected {
+  color: #DAA520;
 }
 
 .link-like:hover {
