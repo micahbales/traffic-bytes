@@ -10,7 +10,7 @@ const filterType = {
 }
 
 // This is the default starting state for the application
-const initialStateValues = {
+const defaultState = {
   activeIp: null,
   filter: null,
   filterButtonText: '',
@@ -105,6 +105,22 @@ class App extends Component {
     this.handleReset = this.handleReset.bind(this);
   }
 
+  componentWillMount() {
+    // Before the component is mounted, check local storage for previous state
+    const storedState = localStorage.getItem('persistedAppState');
+    if (storedState !== defaultState) {
+      this.setState(JSON.parse(storedState));
+    } 
+  }
+
+  componentDidUpdate() {
+    // Whenever the component updates, save current state in local storage
+    const storedState = localStorage.getItem('persistedAppState');
+    if (storedState !== defaultState) {
+      localStorage.setItem('persistedAppState', JSON.stringify(this.state));
+    }
+  }
+
   render() {
     return (
       <div className="App container-fluid">
@@ -193,14 +209,14 @@ class App extends Component {
     const lastSavePoint = history.pop();
 
     this.setState({
-      current: this.state.history.length > 1 ? lastSavePoint : initialStateValues,
+      current: this.state.history.length > 1 ? lastSavePoint : defaultState,
       history: this.state.history.length > 1 ? history : []
     });
   }
 
   handleReset() {
     this.setState({
-      current: initialStateValues,
+      current: defaultState,
       history: []
     });
   }
