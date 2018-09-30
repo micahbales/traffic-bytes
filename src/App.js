@@ -9,6 +9,15 @@ const filterType = {
   FROM: 2
 }
 
+// This is the default starting state for the application
+const initialStateValues = {
+  activeIp: null,
+  filter: null,
+  filterButtonText: '',
+  tableTitle: 'All Data Traffic',
+  trafficData: trafficData
+};
+
 const TrafficDataColumns = (props) => {
   const data = cloneDeep(props.data);
   // Add headers to traffic data
@@ -51,6 +60,10 @@ const PivotTable = (props) => {
     <div className="row">
       <div className="col-md-8 offset-md-2 text-center">
         <button className={`btn ${props.history.length < 1 ? 'd-none' : 'btn-danger filter-button'}`}
+                onClick={props.handleReset}>
+          Reset
+        </button>
+        <button className={`btn ${props.history.length < 1 ? 'd-none' : 'btn-warning filter-button'}`}
                 onClick={props.handleHistoryBack}>
           Back
         </button>
@@ -89,6 +102,7 @@ class App extends Component {
     this.handleSwitchFilter = this.handleSwitchFilter.bind(this);
     this.getFilterButtonText = this.getFilterButtonText.bind(this);
     this.handleHistoryBack = this.handleHistoryBack.bind(this);
+    this.handleReset = this.handleReset.bind(this);
   }
 
   render() {
@@ -109,6 +123,7 @@ class App extends Component {
           handleIpClick={this.handleIpClick}
           handleSwitchFilter={this.handleSwitchFilter}
           handleHistoryBack={this.handleHistoryBack}
+          handleReset={this.handleReset}
         />
       </div>
     );
@@ -144,7 +159,7 @@ class App extends Component {
       history: this.state.history.concat(newHistory)
     }, () => {
       this.filterIpData();
-    })
+    });
   }
 
   filterIpData() {
@@ -176,18 +191,18 @@ class App extends Component {
   handleHistoryBack() {
     const history = cloneDeep(this.state.history);
     const lastSavePoint = history.pop();
-    const resetValues = {
-      activeIp: null,
-      filter: null,
-      filterButtonText: '',
-      tableTitle: 'All Data Traffic',
-      trafficData: trafficData
-    };
 
     this.setState({
-      current: this.state.history.length > 1 ? lastSavePoint : resetValues,
+      current: this.state.history.length > 1 ? lastSavePoint : initialStateValues,
       history: this.state.history.length > 1 ? history : []
-    })
+    });
+  }
+
+  handleReset() {
+    this.setState({
+      current: initialStateValues,
+      history: []
+    });
   }
 }
 
