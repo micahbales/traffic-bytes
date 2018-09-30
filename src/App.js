@@ -21,8 +21,8 @@ const TrafficDataColumns = (props) => {
   return (
       data.map((rowData, i) => {
         return (
-          <div>
-            <div className="row" key={i}>
+          <div key={i}>
+            <div className="row">
             <div className={`col-md-4 data-to ${rowData.result.header === 'true' ? '' : 'link-like clickable'}`} 
                     onClick={props.handleIpClick}>
                 {rowData.result['All_Traffic.dest']}
@@ -50,6 +50,10 @@ const PivotTable = (props) => {
   return (
     <div className="row">
       <div className="col-md-8 offset-md-2 text-center">
+        <button className={`btn ${props.history.length < 1 ? 'd-none' : 'btn-danger filter-button'}`}
+                onClick={props.handleHistoryBack}>
+          Back
+        </button>
         <button className={`btn ${props.filterButtonText === '' ? 'd-none' : 'btn-primary filter-button'}`} 
                 onClick={props.handleSwitchFilter}>
             {props.filterButtonText}
@@ -70,17 +74,21 @@ class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeIp: null,
-      filter: null,
-      filterButtonText: '',
-      tableTitle: 'All Data Traffic',
-      trafficData: trafficData
+      current: {
+        activeIp: null,
+        filter: null,
+        filterButtonText: '',
+        tableTitle: 'All Data Traffic',
+        trafficData: trafficData
+      },
+      history: []
     }
     // Manually bind React component methods to the class
     this.handleIpClick = this.handleIpClick.bind(this);
     this.filterIpData = this.filterIpData.bind(this);
     this.handleSwitchFilter = this.handleSwitchFilter.bind(this);
     this.getFilterButtonText = this.getFilterButtonText.bind(this);
+    this.handleHistoryBack = this.handleHistoryBack.bind(this);
   }
 
   render() {
@@ -94,11 +102,13 @@ class App extends Component {
           </div>
         </div>
         <PivotTable
-          data={this.state.trafficData}
-          title={this.state.tableTitle}
-          filterButtonText={this.state.filterButtonText}
+          data={this.state.current.trafficData}
+          title={this.state.current.tableTitle}
+          history={this.state.history}
+          filterButtonText={this.state.current.filterButtonText}
           handleIpClick={this.handleIpClick}
           handleSwitchFilter={this.handleSwitchFilter}
+          handleHistoryBack={this.handleHistoryBack}
         />
       </div>
     );
@@ -107,11 +117,17 @@ class App extends Component {
   handleIpClick(e) {
     const ipAddress = e.currentTarget.textContent;
     const targetClasses = e.currentTarget.className;
+    
+    const currentState = cloneDeep(this.state.current);
+    currentState.activeIp = ipAddress;
+    currentState.filter = targetClasses.indexOf('data-to') !== -1 ? filterType.TO : filterType.FROM;
+    currentState.filterButtonText = this.getFilterButtonText();
+
+    const newHistory = this.state.current;
 
     this.setState({
-      activeIp: ipAddress, 
-      filter: targetClasses.indexOf('data-to') !== -1 ? filterType.TO : filterType.FROM,
-      filterButtonText: this.getFilterButtonText()
+      current: currentState,
+      history: this.state.history.concat(newHistory)
     }, () => {
       // Filter displayed data once state is updated
       this.filterIpData();
@@ -119,35 +135,59 @@ class App extends Component {
   }
 
   handleSwitchFilter() {
-    console.log('handleSwitchFilter');
+    const newHistory = this.state.current;
+    const currentState = cloneDeep(this.state.current);
+    currentState.filter = this.state.current.filter !== filterType.FROM ? filterType.TO : filterType.FROM;
+
     this.setState({
-      filter: this.state.filter === filterType.FROM ? filterType.TO : filterType.FROM,
-      filterButtonText: this.getFilterButtonText()
+      current: currentState,
+      history: this.state.history.concat(newHistory)
     }, () => {
       this.filterIpData();
     })
   }
 
   filterIpData() {
-    if (!this.state.activeIp) return;
+    if (!this.state.current.activeIp) return;
 
     const data = cloneDeep(trafficData);
-    const activeIp = this.state.activeIp;
-    const recordKey = this.state.filter !== filterType.FROM ? 'All_Traffic.dest' : 'All_Traffic.src';
+    const activeIp = this.state.current.activeIp;
+    const recordKey = this.state.current.filter !== filterType.FROM ? 'All_Traffic.dest' : 'All_Traffic.src';
 
     const updatedData = filter(data, (record) => {
       return record.result[recordKey] === activeIp;
     });
 
     this.setState({
-      trafficData: updatedData,
-      tableTitle: `Traffic ${this.state.filter !== filterType.FROM ? 'To' : 'From'} ${activeIp}`,
-      filterButtonText: this.getFilterButtonText()
+      current: {
+        activeIp: this.state.current.activeIp,
+        trafficData: updatedData,
+        tableTitle: `Traffic ${this.state.current.filter !== filterType.FROM ? 'To' : 'From'} ${activeIp}`,
+        filter: this.state.current.filter === filterType.FROM ? filterType.TO : filterType.FROM,
+        filterButtonText: this.getFilterButtonText()
+      }
     });
   }
 
   getFilterButtonText() {
-    return this.state.filter === filterType.FROM ? 'View Traffic FROM' : 'View Traffic TO';
+    return this.state.current.filter === filterType.FROM ? 'View Traffic TO' : 'View Traffic FROM';
+  }
+
+  handleHistoryBack() {
+    const history = cloneDeep(this.state.history);
+    const lastSavePoint = history.pop();
+    const resetValues = {
+      activeIp: null,
+      filter: null,
+      filterButtonText: '',
+      tableTitle: 'All Data Traffic',
+      trafficData: trafficData
+    };
+
+    this.setState({
+      current: this.state.history.length > 1 ? lastSavePoint : resetValues,
+      history: this.state.history.length > 1 ? history : []
+    })
   }
 }
 
