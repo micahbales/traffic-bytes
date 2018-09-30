@@ -11,11 +11,17 @@ const filterType = {
 
 // This is the default starting state for the application
 const defaultState = {
-  activeIp: null,
-  filter: null,
-  filterButtonText: '',
-  tableTitle: 'All Data Traffic',
-  trafficData: trafficData
+  current: {
+    activeIp: null,
+    filter: null,
+    filterButtonText: '',
+    tableTitle: 'All Data Traffic',
+    trafficData: trafficData
+  },
+  history: {
+    back: [],
+    forward: []
+  },
 };
 
 const TrafficDataColumns = (props) => {
@@ -59,15 +65,20 @@ const PivotTable = (props) => {
   return (
     <div className="row">
       <div className="col-md-8 offset-md-2 text-center">
-        <button className={`btn ${props.history.length < 1 ? 'd-none' : 'btn-danger filter-button'}`}
-                onClick={props.handleReset}>
-          Reset
-        </button>
-        <button className={`btn ${props.history.length < 1 ? 'd-none' : 'btn-warning filter-button'}`}
+        <button className={`btn ${!props.history.back.length ? 'd-none' : 'btn-warning filter-button'}`}
                 onClick={props.handleHistoryBack}>
           Back
         </button>
-        <button className={`btn ${props.filterButtonText === '' ? 'd-none' : 'btn-primary filter-button'}`} 
+        <button className={`btn ${!props.history.back.length && !props.history.forward.length ? 
+                'd-none' : 'btn-danger filter-button'}`}
+                onClick={props.handleReset}>
+          Reset
+        </button>
+        <button className={`btn ${!props.history.forward.length ? 'd-none' : 'btn-success filter-button'}`}
+                onClick={props.handleHistoryForward}>
+          Forward
+        </button>
+        <button className={`btn ${!props.filterButtonText ? 'd-none' : 'btn-primary filter-button'}`} 
                 onClick={props.handleSwitchFilter}>
             {props.filterButtonText}
         </button>
@@ -86,16 +97,7 @@ const PivotTable = (props) => {
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      current: {
-        activeIp: null,
-        filter: null,
-        filterButtonText: '',
-        tableTitle: 'All Data Traffic',
-        trafficData: trafficData
-      },
-      history: []
-    }
+    this.state = defaultState;
     // Manually bind React component methods to the class
     this.handleIpClick = this.handleIpClick.bind(this);
     this.filterIpData = this.filterIpData.bind(this);
@@ -103,6 +105,7 @@ class App extends Component {
     this.getFilterButtonText = this.getFilterButtonText.bind(this);
     this.handleHistoryBack = this.handleHistoryBack.bind(this);
     this.handleReset = this.handleReset.bind(this);
+    this.handleHistoryForward = this.handleHistoryForward.bind(this);
   }
 
   componentWillMount() {
@@ -140,6 +143,7 @@ class App extends Component {
           handleSwitchFilter={this.handleSwitchFilter}
           handleHistoryBack={this.handleHistoryBack}
           handleReset={this.handleReset}
+          handleHistoryForward={this.handleHistoryForward}
         />
       </div>
     );
@@ -158,7 +162,10 @@ class App extends Component {
 
     this.setState({
       current: currentState,
-      history: this.state.history.concat(newHistory)
+      history: {
+        back: this.state.history.back.concat(newHistory),
+        forward: []
+      }
     }, () => {
       // Filter displayed data once state is updated
       this.filterIpData();
@@ -172,7 +179,10 @@ class App extends Component {
 
     this.setState({
       current: currentState,
-      history: this.state.history.concat(newHistory)
+      history: {
+        back: this.state.history.back.concat(newHistory),
+        forward: []
+      }
     }, () => {
       this.filterIpData();
     });
@@ -206,19 +216,34 @@ class App extends Component {
 
   handleHistoryBack() {
     const history = cloneDeep(this.state.history);
-    const lastSavePoint = history.pop();
+    const lastSavePoint = history.back.pop();
 
     this.setState({
-      current: this.state.history.length > 1 ? lastSavePoint : defaultState,
-      history: this.state.history.length > 1 ? history : []
+      current: this.state.history.back.length > 0 ? lastSavePoint : defaultState,
+      history: {
+        back: this.state.history.back.length > 0 ? history.back : [],
+        forward: this.state.history.forward.concat(this.state.current)
+      }
+    });
+  }
+
+  handleHistoryForward() {
+    const history = cloneDeep(this.state.history);
+    const nextSavePoint = history.forward.pop();
+    
+    if (!nextSavePoint) return;
+
+    this.setState({
+      current: nextSavePoint,
+      history: {
+        back: history.back.concat(this.state.current),
+        forward: history.forward
+      }
     });
   }
 
   handleReset() {
-    this.setState({
-      current: defaultState,
-      history: []
-    });
+    this.setState(defaultState);
   }
 }
 
