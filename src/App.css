@@ -1,1 +1,7 @@
+.clickable {
+  cursor: pointer;
+}
 
+.link-like:hover {
+  text-decoration: underline;
+}
