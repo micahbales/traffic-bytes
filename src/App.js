@@ -65,6 +65,8 @@ const TrafficDataColumns = (props) => {
 };
 
 const PivotTable = (props) => {
+  const bytesSum = props.data.reduce((acc, datum) => acc + Number(datum.result.sum_bytes), 0);
+
   return (
     <div className="row">
       <div className="col-8 offset-2 text-center">
@@ -94,6 +96,7 @@ const PivotTable = (props) => {
 
         <div className="col-12">
           <h3 className={`${props.filter ? 'ip-selected' : ''}`}>{props.title}</h3>
+          <p className={`${props.filter ? 'ip-selected' : 'invisible'}`}>({`Grand Total: ${bytesSum} bytes`})</p>
           
           <button className={`btn ${!props.filterButtonText ? 'invisible' : 'control-button filter-button'}`} 
                   onClick={props.handleSwitchFilter}>
