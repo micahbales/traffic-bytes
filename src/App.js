@@ -96,7 +96,7 @@ const PivotTable = (props) => {
 
         <div className="col-12">
           <h3 className={`${props.filter ? 'ip-selected' : ''}`}>{props.title}</h3>
-          <p className={`${props.filter ? 'ip-selected' : 'invisible'}`}>({`Grand Total: ${bytesSum} bytes`})</p>
+          <p className={`${props.filter ? 'ip-selected' : ''}`}>({props.filter ? `Grand Total: ${bytesSum} bytes` : `Click any IP address to start pivoting`})</p>
           
           <button className={`btn ${!props.filterButtonText ? 'invisible' : 'control-button filter-button'}`} 
                   onClick={props.handleSwitchFilter}>
